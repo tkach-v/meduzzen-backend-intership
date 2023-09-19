@@ -1,0 +1,7 @@
+/venv
+.idea
+__pycache__/
+.gitignore
+Dockerfile
+README.md
+.env.sample
