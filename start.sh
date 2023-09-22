@@ -5,6 +5,7 @@ while ! nc -z $DB_HOST $DB_PORT; do
   sleep 1
 done
 
-# run migrations and start the server
+# make and run migrations and start the server
+python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver 0.0.0.0:8000
