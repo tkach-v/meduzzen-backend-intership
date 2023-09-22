@@ -1,7 +1,9 @@
+.git
+.gitignore
+.docker
 /venv
 .idea
-__pycache__/
-.gitignore
-Dockerfile
-README.md
+.env
 .env.sample
+__pycache__/
+README.md
