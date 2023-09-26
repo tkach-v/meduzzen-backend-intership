@@ -10,17 +10,12 @@ git clone <repository_url>
 cd meduzzen-backend-intership
 ```
 
-2. Build the Docker Image:
+2. Build and run the Docker Compose:
 ```
-docker build -t image_name .
-```
-
-3. Run the Docker Container:
-```
-docker run -p 8000:8000 image_name
+docker-compose up --build
 ```
 
-This will start the development server at http://localhost:8000/.
+This will create, apply all migrations and start the development server at http://localhost:8000/.
 
 You should now be able to access the project in your web browser at http://localhost:8000/.
 
@@ -29,7 +24,7 @@ You should now be able to access the project in your web browser at http://local
 If you want to run tests for the project, run this command:
 
 ```
-docker run --rm image_name sh -c "python manage.py test"
+docker run --rm app sh -c "python manage.py test"
 ```
 
 You will see the tests results after completing all the tests.
