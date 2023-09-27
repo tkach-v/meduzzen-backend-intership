@@ -35,9 +35,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'corsheaders',
     'rest_framework',
+
+    'common',
     'health_check',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -140,18 +144,11 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'console': {
-            'format': '%(name)-12s %(levelname)-8s %(message)s'
-        },
         'file': {
             'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
         }
     },
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'console'
-        },
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -160,9 +157,17 @@ LOGGING = {
         }
     },
     'loggers': {
-        '': {
+        'django.db.backends': {
+            'handlers': ['file'],
             'level': 'DEBUG',
-            'handlers': ['console', 'file']
-        }
-    }
+            'propagate': False,
+        },
+    },
+}
+
+AUTH_USER_MODEL = "users.CustomUser"
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 2
 }
