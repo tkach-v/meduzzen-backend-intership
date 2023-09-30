@@ -196,10 +196,13 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
+DOMAIN = os.environ.get('CLIENT_DOMAIN')
+
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'LOGOUT_ON_PASSWORD_CHANGE': True,
     'HIDE_USERS': False,
+    'PASSWORD_RESET_CONFIRM_URL': os.environ.get('PASSWORD_RESET_CONFIRM_URL'),
 
     'SOCIAL_AUTH_TOKEN_STRATEGY': 'djoser.social.token.jwt.TokenStrategy',
     'SOCIAL_AUTH_ALLOWED_REDIRECT_URIS': ['http://127.0.0.1:8080', 'http://127.0.0.1:8080/login'],
@@ -222,10 +225,11 @@ AUTHENTICATION_BACKENDS = (
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = os.environ.get("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-EMAIL_USE_TLS = True
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
