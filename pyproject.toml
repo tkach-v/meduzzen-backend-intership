@@ -1,0 +1,19 @@
+[tool.ruff]
+
+select = [
+    "E",
+    "F",
+    "W",
+    "N",
+    "UP",
+]
+
+exclude = [
+    ".bzr",
+    "migrations",
+    ".git",
+    ".ruff_cache",
+    "venv",
+    "__pycache__",
+    "settings.py",
+]
