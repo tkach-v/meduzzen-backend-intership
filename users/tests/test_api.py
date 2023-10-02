@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-CREATE_USER_URL = reverse('user:user-list')
+CREATE_USER_URL = '/api/users/'
 
 
 def create_user(**params):
