@@ -1,0 +1,26 @@
+[tool.ruff]
+
+line-length=120
+
+select = [
+    "E",
+    "F",
+    "W",
+    "N",
+    "UP",
+    "I",
+    "S",
+    "A",
+    "DJ",
+    "RET",
+]
+
+exclude = [
+    ".bzr",
+    "migrations",
+    ".git",
+    ".ruff_cache",
+    "venv",
+    "__pycache__",
+    "settings.py",
+]
