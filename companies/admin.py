@@ -1,5 +1,7 @@
 from django.contrib import admin
+
 from companies import models
+
 
 class CompaniesAdmin(admin.ModelAdmin):
     list_display = ["name", "owner"]

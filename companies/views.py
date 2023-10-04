@@ -1,5 +1,4 @@
-from rest_framework import permissions
-from rest_framework import viewsets
+from rest_framework import permissions, viewsets
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
@@ -12,17 +11,17 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if self.request.method in permissions.SAFE_METHODS:
             # Filter companies to include only visible companies
             return models.Company.objects.filter(visible=True)
-        else:
-            # Include all companies
-            return models.Company.objects.all()
+
+        # Include all companies
+        return models.Company.objects.all()
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'destroy']:
             # Allow editing only for the owner of the company
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwner()]
-        else:
-            # Allow reading and creating for any authenticated user
-            return [permissions.IsAuthenticated()]
+
+        # Allow reading and creating for any authenticated user
+        return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
         # Set the owner of the company to the current user, and add the user to the members
