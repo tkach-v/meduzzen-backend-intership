@@ -46,6 +46,5 @@ jobs:
 
       - name: Lint
         run: docker-compose run --rm app sh -c "ruff check ."
-
       - name: Test
         run: docker-compose run --rm app sh -c "python manage.py test"
