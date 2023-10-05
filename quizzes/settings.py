@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'common',
     'health_check',
     'users',
+    'companies',
 ]
 
 MIDDLEWARE = [
