@@ -3,6 +3,7 @@ Serializers for the user API View
 """
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from companies.serializers import CompanyInvitationSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -36,3 +37,8 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class InvitationSerializer(CompanyInvitationSerializer):
+    class Meta(CompanyInvitationSerializer.Meta):
+        read_only_fields = ('company', 'sender', 'recipient', 'accepted', 'pending')

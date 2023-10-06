@@ -38,4 +38,5 @@ urlpatterns = [
     path('api/', include('djoser.social.urls')),
     path('api/health_check/', include('health_check.urls')),
     path('api/companies/', include('companies.urls')),
+    path('api/users/', include('users.urls')),
 ]
