@@ -14,6 +14,9 @@ nested_router = NestedSimpleRouter(router, '', lookup='company')
 nested_router.register('invitations',
                        views.CompanyInvitationViewSet,
                        basename='invitations')
+nested_router.register('requests',
+                       views.UserRequestViewSet,
+                       basename='requests')
 
 app_name = 'companies'
 urlpatterns = [
