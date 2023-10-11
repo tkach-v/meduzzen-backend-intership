@@ -4,8 +4,8 @@ Serializers for the user API View
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from companies.serializers import CompanyInvitationSerializer, CompanySerializer
 from companies.models import UserRequest
+from companies.serializers import CompanyInvitationSerializer, CompanySerializer
 
 
 class UserSerializer(serializers.ModelSerializer):

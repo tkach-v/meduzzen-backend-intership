@@ -7,8 +7,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from companies.models import Company, CompanyInvitation, UserRequest
-from companies.serializers import UserRequestSerializer
-from users.serializers import InvitationSerializer, UserCompaniesSerializer, RequestsSerializer
+from users.serializers import InvitationSerializer, RequestsSerializer, UserCompaniesSerializer
 
 
 class UserInvitations(viewsets.ReadOnlyModelViewSet):
