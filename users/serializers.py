@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from companies.serializers import CompanyInvitationSerializer, CompanySerializer
+from companies.models import UserRequest
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -42,10 +43,17 @@ class UserSerializer(serializers.ModelSerializer):
 
 class InvitationSerializer(CompanyInvitationSerializer):
     class Meta(CompanyInvitationSerializer.Meta):
-        read_only_fields = ('company', 'sender', 'recipient', 'accepted', 'pending')
+        read_only_fields = ('company', 'sender', 'recipient', 'status')
+
+
+class RequestsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRequest
+        fields = '__all__'
+        read_only_fields = ('sender', 'status')
 
 
 class UserCompaniesSerializer(CompanySerializer):
     class Meta(CompanySerializer.Meta):
         fields = ['id', 'name']
-        read_only_fields = ('name', )
+        read_only_fields = ('name',)

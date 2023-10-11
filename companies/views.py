@@ -73,10 +73,9 @@ class CompanyViewSet(viewsets.ModelViewSet):
 class CompanyInvitationViewSet(mixins.ListModelMixin,
                                mixins.RetrieveModelMixin,
                                mixins.CreateModelMixin,
-                               mixins.DestroyModelMixin,
                                viewsets.GenericViewSet):
     """
-    Viewset for listing invitations in the company, creating and deleting it
+    ViewSet for listing, creating and cancelling invitations in the company
     """
     serializer_class = serializers.CompanyInvitationSerializer
     permission_classes = [permissions.IsAuthenticated, custom_permissions.IsCompanyOwnerNested]
@@ -98,7 +97,7 @@ class CompanyInvitationViewSet(mixins.ListModelMixin,
             sender=sender,
             recipient=recipient,
             company_id=company_id,
-            pending=True
+            status=models.CompanyInvitation.PENDING
         ).first()
 
         if existing_invitation:
@@ -106,57 +105,37 @@ class CompanyInvitationViewSet(mixins.ListModelMixin,
 
         serializer.save(sender=sender, company_id=company_id)
 
+    @action(detail=True, methods=['POST'], url_path='cancel')
+    def cancel_invitation(self, request, pk=None, company_pk=None):
+        instance = self.get_object()
+        data = {'status': models.CompanyInvitation.CANCELLED}
+        serializer = self.get_serializer(instance=instance, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.update(instance, data)
+            return Response({'message': 'Invitation cancelled'})
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserRequestViewSet(mixins.ListModelMixin,
                          mixins.RetrieveModelMixin,
-                         mixins.CreateModelMixin,
-                         mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
     """
     ViewSet for listing requests in the company
-    User can create and delete request
-    Company owner can see list of requests for his company, approve or reject it
+    Owner can see list of requests for his company, approve or reject it
     """
     serializer_class = serializers.UserRequestSerializer
+    permission_classes = [permissions.IsAuthenticated, custom_permissions.IsCompanyOwnerNested]
 
     def get_queryset(self):
         company_id = self.kwargs.get('company_pk')
-        return models.UserRequest.objects.filter(company_id=company_id, pending=True)
-
-    def get_permissions(self):
-        if self.action in ['list', 'approve_request', 'reject_request']:
-            return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwnerNested()]
-        if self.action == 'retrieve':
-            return [permissions.IsAuthenticated(), custom_permissions.IsRequestOwnerOrCompanyOwner()]
-        if self.action == 'destroy':
-            return [permissions.IsAuthenticated(), custom_permissions.IsRequestOwner()]
-        return [permissions.IsAuthenticated()]
-
-    def perform_create(self, serializer):
-        sender = self.request.user
-        company_id = self.kwargs.get('company_pk')
-        company = models.Company.objects.get(pk=company_id)
-
-        if company.members.filter(pk=sender.id).exists():
-            return Response({'detail': 'You are already a member of the company.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        existing_request = self.get_queryset().filter(
-            sender=sender,
-            company_id=company_id,
-            pending=True
-        ).first()
-
-        if existing_request:
-            return Response({'detail': 'There is already a pending request to the same company.'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save(sender=sender, company_id=company_id)
-        return None
+        return models.UserRequest.objects.filter(company_id=company_id)
 
     @action(detail=True, methods=['POST'], url_path='approve')
     def approve_request(self, request, pk=None, company_pk=None):
         instance = self.get_object()
-        data = {'accepted': True, 'pending': False}
+        data = {'status': models.UserRequest.APPROVED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
@@ -173,7 +152,7 @@ class UserRequestViewSet(mixins.ListModelMixin,
     @action(detail=True, methods=['POST'], url_path='reject')
     def reject_request(self, request, pk=None, company_pk=None):
         instance = self.get_object()
-        data = {'accepted': False, 'pending': False}
+        data = {'status': models.UserRequest.REJECTED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():

@@ -10,8 +10,8 @@ invitations_router.register('',
 
 requests_router = DefaultRouter()
 requests_router.register('',
-                            views.UserRequests,
-                            basename='requests')
+                         views.UserRequests,
+                         basename='requests')
 
 companies_router = DefaultRouter()
 companies_router.register('',

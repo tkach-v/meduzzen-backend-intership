@@ -18,25 +18,37 @@ class Company(TimeStampedModel):
         return self.name
 
 
-class InvitationRequestMixin(TimeStampedModel):
-    """
-       Abstract model containing common fields for invitations and requests.
-    """
+class CompanyInvitation(TimeStampedModel):
+    ACCEPTED = "ACCEPTED"
+    DECLINED = "DECLINED"
+    CANCELLED = "CANCELLED"
+    PENDING = "PENDING"
+    STATUS_CHOICES = [
+        (ACCEPTED, 'Accepted'),
+        (DECLINED, 'Declined'),
+        (CANCELLED, 'Cancelled'),
+        (PENDING, 'Pending'),
+    ]
 
-    accepted = models.BooleanField(default=False)
-    pending = models.BooleanField(default=True)
-
-    class Meta:
-        abstract = True
-
-
-class CompanyInvitation(InvitationRequestMixin):
+    status = models.CharField(choices=STATUS_CHOICES, default=PENDING)
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_invitations')
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                   related_name='received_invitations')
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
 
 
-class UserRequest(InvitationRequestMixin):
+class UserRequest(TimeStampedModel):
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+    PENDING = "PENDING"
+    STATUS_CHOICES = [
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+        (CANCELLED, 'Cancelled'),
+        (PENDING, 'Pending'),
+    ]
+
+    status = models.CharField(choices=STATUS_CHOICES, default=PENDING)
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_requests')
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='received_requests')
