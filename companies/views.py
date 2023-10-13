@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
-from users.models import UserRequest, RequestStatuses
+from users.models import RequestStatuses, UserRequest
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -109,12 +109,12 @@ class CompanyInvitationViewSet(mixins.ListModelMixin,
     @action(detail=True, methods=['POST'], url_path='revoke')
     def revoke_invitation(self, request, pk=None, company_pk=None):
         instance = self.get_object()
-        data = {'status': models.InvitationStatuses.CANCELLED}
+        data = {'status': models.InvitationStatuses.REVOKED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
             serializer.update(instance, data)
-            return Response({'message': 'Invitation cancelled'})
+            return Response({'message': 'Invitation revoked'})
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

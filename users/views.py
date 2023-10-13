@@ -1,10 +1,9 @@
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from companies.models import Company, CompanyInvitation, InvitationStatuses
-from users.models import UserRequest, RequestStatuses
+from users.models import RequestStatuses, UserRequest
 from users.serializers import InvitationSerializer, RequestsSerializer, UserCompaniesSerializer
 
 
@@ -65,20 +64,6 @@ class UserRequests(mixins.ListModelMixin,
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
-
-        # sender = self.request.user
-        # company_id = self.request.data.get('company')
-        #
-        # existing_request = self.get_queryset().filter(
-        #     sender=sender,
-        #     company_id=company_id,
-        #     status=RequestStatuses.PENDING
-        # ).first()
-        # if existing_request:
-        #     return ValidationError({'detail': 'There is already a pending request to the same company.'})
-        #
-        # serializer.save(sender=sender)
-        # return None
 
     @action(detail=True, methods=['POST'], url_path='cancel')
     def cancel_request(self, request, pk=None):

@@ -1,8 +1,9 @@
+from enum import IntEnum
+
 from django.conf import settings
 from django.db import models
 
 from common.models import TimeStampedModel
-from enum import IntEnum
 
 
 class Company(TimeStampedModel):
@@ -22,7 +23,7 @@ class Company(TimeStampedModel):
 class InvitationStatuses(IntEnum):
     ACCEPTED = 1
     DECLINED = 2
-    CANCELLED = 3
+    REVOKED = 3
     PENDING = 4
 
     @classmethod
