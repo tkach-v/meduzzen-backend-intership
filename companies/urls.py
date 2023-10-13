@@ -15,7 +15,7 @@ nested_router.register('invitations',
                        views.CompanyInvitationViewSet,
                        basename='invitations')
 nested_router.register('requests',
-                       views.UserRequestViewSet,
+                       views.CompanyRequestViewSet,
                        basename='requests')
 
 app_name = 'companies'

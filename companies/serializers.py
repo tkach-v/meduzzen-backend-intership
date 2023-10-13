@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from companies import models
+from users.models import UserRequest
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -17,8 +18,8 @@ class CompanyInvitationSerializer(serializers.ModelSerializer):
         read_only_fields = ('company', 'sender', 'status')
 
 
-class UserRequestSerializer(serializers.ModelSerializer):
+class CompanyRequestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.UserRequest
+        model = UserRequest
         fields = '__all__'
         read_only_fields = ('company', 'sender', 'status')

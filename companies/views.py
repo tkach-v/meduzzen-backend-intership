@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
+from users.models import UserRequest, RequestStatuses
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -97,7 +98,7 @@ class CompanyInvitationViewSet(mixins.ListModelMixin,
             sender=sender,
             recipient=recipient,
             company_id=company_id,
-            status=models.CompanyInvitation.PENDING
+            status=models.InvitationStatuses.PENDING
         ).first()
 
         if existing_invitation:
@@ -105,10 +106,10 @@ class CompanyInvitationViewSet(mixins.ListModelMixin,
 
         serializer.save(sender=sender, company_id=company_id)
 
-    @action(detail=True, methods=['POST'], url_path='cancel')
-    def cancel_invitation(self, request, pk=None, company_pk=None):
+    @action(detail=True, methods=['POST'], url_path='revoke')
+    def revoke_invitation(self, request, pk=None, company_pk=None):
         instance = self.get_object()
-        data = {'status': models.CompanyInvitation.CANCELLED}
+        data = {'status': models.InvitationStatuses.CANCELLED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
@@ -118,24 +119,24 @@ class CompanyInvitationViewSet(mixins.ListModelMixin,
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserRequestViewSet(mixins.ListModelMixin,
-                         mixins.RetrieveModelMixin,
-                         viewsets.GenericViewSet):
+class CompanyRequestViewSet(mixins.ListModelMixin,
+                            mixins.RetrieveModelMixin,
+                            viewsets.GenericViewSet):
     """
     ViewSet for listing requests in the company
     Owner can see list of requests for his company, approve or reject it
     """
-    serializer_class = serializers.UserRequestSerializer
+    serializer_class = serializers.CompanyRequestSerializer
     permission_classes = [permissions.IsAuthenticated, custom_permissions.IsCompanyOwnerNested]
 
     def get_queryset(self):
         company_id = self.kwargs.get('company_pk')
-        return models.UserRequest.objects.filter(company_id=company_id)
+        return UserRequest.objects.filter(company_id=company_id)
 
     @action(detail=True, methods=['POST'], url_path='approve')
     def approve_request(self, request, pk=None, company_pk=None):
         instance = self.get_object()
-        data = {'status': models.UserRequest.APPROVED}
+        data = {'status': RequestStatuses.APPROVED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
@@ -152,7 +153,7 @@ class UserRequestViewSet(mixins.ListModelMixin,
     @action(detail=True, methods=['POST'], url_path='reject')
     def reject_request(self, request, pk=None, company_pk=None):
         instance = self.get_object()
-        data = {'status': models.UserRequest.REJECTED}
+        data = {'status': RequestStatuses.REJECTED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():

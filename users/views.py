@@ -1,12 +1,10 @@
-"""
-Views for the recipe APIs.
-"""
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from companies.models import Company, CompanyInvitation, UserRequest
+from companies.models import Company, CompanyInvitation, InvitationStatuses
+from users.models import UserRequest, RequestStatuses
 from users.serializers import InvitationSerializer, RequestsSerializer, UserCompaniesSerializer
 
 
@@ -24,7 +22,7 @@ class UserInvitations(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['POST'], url_path='accept')
     def accept_invitation(self, request, pk=None):
         instance = self.get_object()
-        data = {'status': CompanyInvitation.ACCEPTED}
+        data = {'status': InvitationStatuses.ACCEPTED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
@@ -41,7 +39,7 @@ class UserInvitations(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['POST'], url_path='decline')
     def decline_invitation(self, request, pk=None):
         instance = self.get_object()
-        data = {'status': CompanyInvitation.DECLINED}
+        data = {'status': InvitationStatuses.DECLINED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():
@@ -66,28 +64,26 @@ class UserRequests(mixins.ListModelMixin,
         return UserRequest.objects.filter(sender=user)
 
     def perform_create(self, serializer):
-        sender = self.request.user
-        company_id = self.request.data.get('company')
+        serializer.save(sender=self.request.user)
 
-        company = Company.objects.get(pk=company_id)
-        if company.members.filter(pk=sender.id).exists():
-            return ValidationError({'detail': 'You are already a member of the company.'})
-
-        existing_request = self.get_queryset().filter(
-            sender=sender,
-            company_id=company_id,
-            status=UserRequest.PENDING
-        ).first()
-        if existing_request:
-            return ValidationError({'detail': 'There is already a pending request to the same company.'})
-
-        serializer.save(sender=sender)
-        return None
+        # sender = self.request.user
+        # company_id = self.request.data.get('company')
+        #
+        # existing_request = self.get_queryset().filter(
+        #     sender=sender,
+        #     company_id=company_id,
+        #     status=RequestStatuses.PENDING
+        # ).first()
+        # if existing_request:
+        #     return ValidationError({'detail': 'There is already a pending request to the same company.'})
+        #
+        # serializer.save(sender=sender)
+        # return None
 
     @action(detail=True, methods=['POST'], url_path='cancel')
     def cancel_request(self, request, pk=None):
         instance = self.get_object()
-        data = {'status': UserRequest.CANCELLED}
+        data = {'status': RequestStatuses.CANCELLED}
         serializer = self.get_serializer(instance=instance, data=data, partial=True)
 
         if serializer.is_valid():

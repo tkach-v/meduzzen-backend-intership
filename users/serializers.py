@@ -4,7 +4,7 @@ Serializers for the user API View
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from companies.models import UserRequest
+from users.models import UserRequest, RequestStatuses
 from companies.serializers import CompanyInvitationSerializer, CompanySerializer
 
 
@@ -51,6 +51,29 @@ class RequestsSerializer(serializers.ModelSerializer):
         model = UserRequest
         fields = '__all__'
         read_only_fields = ('sender', 'status')
+
+    def validate_company(self, value):
+        request = self.context.get("request")
+        sender = request.user
+
+        if value.members.filter(pk=sender.id).exists():
+            raise serializers.ValidationError('You are already a member of the company.')
+        return value
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        sender = request.user
+        company_id = validated_data.get('company')
+
+        existing_request = UserRequest.objects.filter(
+            sender=sender,
+            company_id=company_id,
+            status=RequestStatuses.PENDING
+        ).first()
+        if existing_request:
+            raise serializers.ValidationError({'detail': 'There is already a pending request to the same company.'})
+
+        return super(RequestsSerializer, self).create(validated_data)
 
 
 class UserCompaniesSerializer(CompanySerializer):

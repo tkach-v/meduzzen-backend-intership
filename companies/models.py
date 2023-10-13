@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from common.models import TimeStampedModel
+from enum import IntEnum
 
 
 class Company(TimeStampedModel):
@@ -18,37 +19,20 @@ class Company(TimeStampedModel):
         return self.name
 
 
-class CompanyInvitation(TimeStampedModel):
-    ACCEPTED = "ACCEPTED"
-    DECLINED = "DECLINED"
-    CANCELLED = "CANCELLED"
-    PENDING = "PENDING"
-    STATUS_CHOICES = [
-        (ACCEPTED, 'Accepted'),
-        (DECLINED, 'Declined'),
-        (CANCELLED, 'Cancelled'),
-        (PENDING, 'Pending'),
-    ]
+class InvitationStatuses(IntEnum):
+    ACCEPTED = 1
+    DECLINED = 2
+    CANCELLED = 3
+    PENDING = 4
 
-    status = models.CharField(choices=STATUS_CHOICES, default=PENDING)
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.name) for key in cls]
+
+
+class CompanyInvitation(TimeStampedModel):
+    status = models.IntegerField(choices=InvitationStatuses.choices(), default=InvitationStatuses.PENDING)
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_invitations')
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                   related_name='received_invitations')
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-
-
-class UserRequest(TimeStampedModel):
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
-    CANCELLED = "CANCELLED"
-    PENDING = "PENDING"
-    STATUS_CHOICES = [
-        (APPROVED, 'Approved'),
-        (REJECTED, 'Rejected'),
-        (CANCELLED, 'Cancelled'),
-        (PENDING, 'Pending'),
-    ]
-
-    status = models.CharField(choices=STATUS_CHOICES, default=PENDING)
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_requests')
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='received_requests')
