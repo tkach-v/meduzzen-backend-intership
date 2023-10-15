@@ -8,7 +8,7 @@ from companies.models import Company
 
 
 class CustomUser(CustomAbstractUser):
-    pass
+    avatar = models.ImageField(upload_to='avatars', default='avatars/default.jpg')
 
 
 class RequestStatuses(IntEnum):

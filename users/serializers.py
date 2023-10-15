@@ -21,6 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'created_at',
             'updated_at',
+            'avatar'
         ]
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 8},
@@ -36,7 +37,9 @@ class UserSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         user = super().update(instance, validated_data)
 
-        user.set_password(password)
+        if password:
+            user.set_password(password)
+
         user.save()
         return user
 
