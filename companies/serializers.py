@@ -1,10 +1,25 @@
 from rest_framework import serializers
 
-from .models import Company
+from companies import models
+from users.models import UserRequest
 
 
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Company
-        fields = ('id', 'name', 'description', 'owner', 'members', 'visible')
-        read_only_fields = ('owner', )
+        model = models.Company
+        fields = '__all__'
+        read_only_fields = ('owner', 'members')
+
+
+class CompanyInvitationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CompanyInvitation
+        fields = '__all__'
+        read_only_fields = ('company', 'sender', 'status')
+
+
+class CompanyRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRequest
+        fields = '__all__'
+        read_only_fields = ('company', 'sender', 'status')
