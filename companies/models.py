@@ -11,6 +11,7 @@ class Company(TimeStampedModel):
     description = models.TextField(blank=True, default='')
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_companies')
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='companies_joined', blank=True)
+    administrators = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='companies_administered', blank=True)
     visible = models.BooleanField(default=True)
 
     class Meta:
