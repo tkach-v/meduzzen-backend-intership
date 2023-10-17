@@ -22,4 +22,5 @@ urlpatterns = [
     path('me/companies/', include(companies_router.urls)),
     path('me/invitations/', include(invitations_router.urls)),
     path('me/requests/', include(requests_router.urls)),
+    path('delete/<int:pk>/', views.UserDeleteView.as_view(), name='user-delete')
 ]

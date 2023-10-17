@@ -83,3 +83,7 @@ class UserCompaniesSerializer(CompanySerializer):
     class Meta(CompanySerializer.Meta):
         fields = ['id', 'name']
         read_only_fields = ('name',)
+
+
+# class UserDeleteSerializer(serializers.Serializer):
+
