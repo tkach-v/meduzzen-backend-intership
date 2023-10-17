@@ -97,5 +97,7 @@ class UserCompanies(mixins.ListModelMixin,
         if company.owner == request.user:
             return Response({'detail': 'Owner cannot leave the company'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if request.user in company.administrators.all():
+            company.administrators.remove(request.user)
         company.members.remove(request.user)
         return Response({'message': 'User has left the company'})

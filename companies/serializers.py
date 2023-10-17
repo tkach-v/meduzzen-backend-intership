@@ -8,7 +8,7 @@ class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Company
         fields = '__all__'
-        read_only_fields = ('owner', 'members')
+        read_only_fields = ('owner', 'members', 'administrators')
 
 
 class CompanyInvitationSerializer(serializers.ModelSerializer):

@@ -24,7 +24,14 @@ class CompanyViewSet(viewsets.ModelViewSet):
         return models.Company.objects.all()
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy', 'remove_user']:
+        if self.action in [
+            'update',
+            'partial_update',
+            'destroy',
+            'remove_user',
+            'add_admin',
+            'remove_admin'
+        ]:
             # Allow editing only for the owner of the company
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwner()]
 
@@ -41,34 +48,68 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
         serializer.save(owner=owner, members=members)
 
+    def validate_user_id(self, user_id):
+        if user_id is None:
+            raise ValidationError({'detail': 'user_id is required'})
+
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            raise ValidationError({'detail': 'user_id must be an integer'})
+
+        try:
+            user = get_user_model().objects.get(pk=user_id)
+        except get_user_model().DoesNotExist:
+            raise ValidationError({'detail': 'User not found'})
+
+        return user
+
     @action(detail=True,
             url_path='remove-user',
             methods=['POST'])
     def remove_user(self, request, pk=None):
         company = self.get_object()
-        user_id = request.data.get('user_id')
-
-        if user_id is None:
-            return Response({'detail': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user_id = int(user_id)
-        except ValueError:
-            return Response({'detail': 'user_id must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = get_user_model().objects.get(pk=user_id)
-        except get_user_model().DoesNotExist:
-            return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = self.validate_user_id(request.data.get('user_id'))
 
         if user == company.owner:
-            return Response({'detail': 'Cannot remove the owner of the company'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'detail': 'Cannot remove the owner of the company'})
 
         if user in company.members.all():
+            if user in company.administrators.all():
+                company.administrators.remove(user)
             company.members.remove(user)
             return Response({'message': 'User removed successfully'})
 
-        return Response({'detail': 'User is not a member of the company'}, status=status.HTTP_400_BAD_REQUEST)
+        raise ValidationError({'detail': 'User is not a member of the company'})
+
+    @action(detail=True,
+            url_path='add-admin',
+            methods=['POST'])
+    def add_admin(self, request, pk=None):
+        company = self.get_object()
+        user = self.validate_user_id(request.data.get('user_id'))
+
+        if user not in company.members.all():
+            raise ValidationError({'detail': 'User is not a member of the company'})
+
+        if user == company.owner:
+            raise ValidationError({'detail': 'Cannot add the owner to the administrators'})
+
+        company.administrators.add(user)
+        return Response({'message': 'Administrator added successfully'})
+
+    @action(detail=True,
+            url_path='remove-admin',
+            methods=['POST'])
+    def remove_admin(self, request, pk=None):
+        company = self.get_object()
+        user = self.validate_user_id(request.data.get('user_id'))
+
+        if user in company.administrators.all():
+            company.administrators.remove(user)
+            return Response({'message': 'Administrator removed successfully'})
+
+        raise ValidationError({'detail': 'User is not an administrator of the company'})
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,
