@@ -8,4 +8,5 @@ class CompaniesAdmin(admin.ModelAdmin):
     search_fields = ['name', 'description']
     list_filter = ['name', 'owner']
 
+
 admin.site.register(models.Company, CompaniesAdmin)

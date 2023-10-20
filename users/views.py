@@ -1,11 +1,11 @@
-from rest_framework import mixins, permissions, status, viewsets, generics
+from rest_framework import generics, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from companies.models import Company, CompanyInvitation, InvitationStatuses
-from users.models import RequestStatuses, UserRequest, CustomUser
-from users.serializers import InvitationSerializer, RequestsSerializer, UserCompaniesSerializer, UserSerializer
+from users.models import CustomUser, RequestStatuses, UserRequest
 from users.permissions import IsUserSelf
+from users.serializers import InvitationSerializer, RequestsSerializer, UserCompaniesSerializer, UserSerializer
 
 
 class UserInvitations(viewsets.ReadOnlyModelViewSet):
