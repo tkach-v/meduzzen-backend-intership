@@ -16,7 +16,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Question
-        fields = ['text', 'answers']
+        fields = ['id', 'text', 'answers']
 
     def validate_answers(self, value):
         if len(value) < 2:
@@ -26,6 +26,14 @@ class QuestionSerializer(serializers.ModelSerializer):
         if not has_correct_answer:
             raise serializers.ValidationError("At least one answer must be marked as correct.")
         return value
+
+    def create(self, validated_data):
+        answers_data = validated_data.pop('answers', [])
+        question = models.Question.objects.create(**validated_data)
+        answers = [models.Answer(question=question, **answer_data) for answer_data in answers_data]
+        models.Answer.objects.bulk_create(answers)
+
+        return question
 
 
 class QuizSerializer(serializers.ModelSerializer):
@@ -43,35 +51,44 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         questions_data = validated_data.pop('questions', [])
-        quiz = models.Quiz.objects.create(**validated_data)
 
-        for question_data in questions_data:
-            answers_data = question_data.pop('answers', [])
-            question = models.Question.objects.create(quiz=quiz, **question_data)
+        with transaction.atomic():
+            quiz = models.Quiz.objects.create(**validated_data)
+            questions = QuestionSerializer(data=questions_data, many=True)
+            if questions.is_valid():
+                questions.save(quiz=quiz)
+            else:
+                raise ValidationError(questions.errors)
 
-            for answer_data in answers_data:
-                models.Answer.objects.create(question=question, **answer_data)
+            return quiz
 
-        quiz.refresh_from_db()
-        return quiz
-
+    @transaction.atomic
     def update(self, instance, validated_data):
-        questions_data = validated_data.pop('questions', [])
+        # questions_data = validated_data.pop('questions', [])
 
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
         instance.frequency = validated_data.get('frequency', instance.frequency)
         instance.save()
 
-        if questions_data:
-            with transaction.atomic():
-                instance.questions.all().delete()
-
-                for question_data in questions_data:
-                    answers_data = question_data.pop('answers', [])
-                    question = models.Question.objects.create(quiz=instance, **question_data)
-
-                    for answer_data in answers_data:
-                        models.Answer.objects.create(question=question, **answer_data)
+        # if questions_data:
+        #     answers_arrays = [questions_data[i]['answers'] for i in range(len(questions_data))]
+        #     questions = []
+        #     for question_data in questions_data:
+        #         print(question_data)
+        #         print(question_data['id'])
+        #         print(question_data.id)
+        #         answers_data = question_data.pop('answers', [])
+        #
+        #         questions.append(models.Question(**question_data))
+        #
+        #         question = models.Question.objects.create(quiz=instance, **question_data)
+        #
+        #         for answer_data in answers_data:
+        #             models.Answer.objects.create(question=question, **answer_data)
+        #
+        #     for question in questions:
+        #         print(question.__dict__)
+        #     models.Question.objects.bulk_update(questions, ['text'])
 
         return instance
