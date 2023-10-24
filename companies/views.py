@@ -6,6 +6,8 @@ from rest_framework.response import Response
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
+from quizz.models import Quiz
+from quizz.serializers import QuizSerializer
 from users.models import RequestStatuses, UserRequest
 
 
@@ -110,6 +112,18 @@ class CompanyViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Administrator removed successfully'})
 
         raise ValidationError({'detail': 'User is not an administrator of the company'})
+
+    @action(detail=True, methods=['GET'])
+    def quizzes(self, request, pk=None):
+        company = self.get_object()
+
+        # Check if the user is a member of the company before retrieving quizzes
+        if request.user in company.members.all():
+            quizzes = Quiz.objects.filter(company=company)
+            serializer = QuizSerializer(quizzes, many=True)
+            return Response(serializer.data)
+
+        return Response({"detail": "You are not a member of this company."}, status=403)
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,

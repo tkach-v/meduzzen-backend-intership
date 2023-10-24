@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/health_check/', include('health_check.urls')),
     path('api/companies/', include('companies.urls')),
     path('api/users/', include('users.urls')),
+    path('api/quizzes/', include('quizz.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
