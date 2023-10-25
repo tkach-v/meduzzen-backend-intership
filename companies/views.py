@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -6,7 +7,7 @@ from rest_framework.response import Response
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
-from quizz.models import Quiz
+from quizz.models import Quiz, Result
 from quizz.serializers import QuizSerializer
 from users.models import RequestStatuses, UserRequest
 
@@ -124,6 +125,36 @@ class CompanyViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         return Response({"detail": "You are not a member of this company."}, status=403)
+
+    @action(detail=True, methods=['GET'], url_path='user-score')
+    def user_score(self, request, pk=None):
+        """ Show average score of user per company """
+        company = self.get_object()
+        user_id = request.query_params.get('user')
+
+        if user_id is not None:
+            try:
+                user_id = int(user_id)
+            except ValueError:
+                return ValidationError({"detail": "Invalid user ID format."})
+
+            if user_id not in company.members.values_list('id', flat=True):
+                raise ValidationError({"detail": "User is not a member of this company."})
+
+            results = Result.objects.filter(quiz__company=company, user_id=user_id)
+            if results.exists():
+                total_correct_questions = results.aggregate(Sum('correct_questions'))['correct_questions__sum']
+                total_total_questions = results.aggregate(Sum('total_questions'))['total_questions__sum']
+
+                if total_correct_questions is not None and total_total_questions is not None:
+                    average_score = total_correct_questions / total_total_questions
+                else:
+                    average_score = 0
+                return Response({'average_score': average_score}, status=status.HTTP_200_OK)
+            else:
+                return Response({'average_score': 0}, status=status.HTTP_200_OK)
+        else:
+            raise ValidationError({"detail": "User ID is required in query parameters."})
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,
