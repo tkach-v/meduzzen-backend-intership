@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Sum
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -7,6 +6,7 @@ from rest_framework.response import Response
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
+from helpers.count_user_score import count_user_score
 from quizz.models import Quiz, Result
 from quizz.serializers import QuizSerializer
 from users.models import RequestStatuses, UserRequest
@@ -142,19 +142,9 @@ class CompanyViewSet(viewsets.ModelViewSet):
                 raise ValidationError({"detail": "User is not a member of this company."})
 
             results = Result.objects.filter(quiz__company=company, user_id=user_id)
-            if results.exists():
-                total_correct_questions = results.aggregate(Sum('correct_questions'))['correct_questions__sum']
-                total_total_questions = results.aggregate(Sum('total_questions'))['total_questions__sum']
-
-                if total_correct_questions is not None and total_total_questions is not None:
-                    average_score = total_correct_questions / total_total_questions
-                else:
-                    average_score = 0
-                return Response({'average_score': average_score}, status=status.HTTP_200_OK)
-            else:
-                return Response({'average_score': 0}, status=status.HTTP_200_OK)
-        else:
-            raise ValidationError({"detail": "User ID is required in query parameters."})
+            average_score = count_user_score(results)
+            return Response({'average_score': average_score}, status=status.HTTP_200_OK)
+        raise ValidationError({"detail": "User ID is required in query parameters."})
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,

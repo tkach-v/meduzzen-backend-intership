@@ -1,9 +1,9 @@
-from django.db.models import Sum
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from helpers.count_user_score import count_user_score
 from quizz import models, serializers
 from quizz.permissions import IsOwnerOrAdministrator
 
@@ -122,8 +122,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['GET'], url_path='user-score')
     def user_score(self, request):
@@ -137,19 +136,9 @@ class QuizViewSet(viewsets.ModelViewSet):
                 return ValidationError({"detail": "Invalid user ID format."})
 
             results = models.Result.objects.filter(user_id=user_id)
-            if results.exists():
-                total_correct_questions = results.aggregate(Sum('correct_questions'))['correct_questions__sum']
-                total_total_questions = results.aggregate(Sum('total_questions'))['total_questions__sum']
-
-                if total_correct_questions is not None and total_total_questions is not None:
-                    average_score = total_correct_questions / total_total_questions
-                else:
-                    average_score = 0
-                return Response({'average_score': average_score}, status=status.HTTP_200_OK)
-            else:
-                return Response({'average_score': 0}, status=status.HTTP_200_OK)
-        else:
-            raise ValidationError({"detail": "User ID is required in query parameters."})
+            average_score = count_user_score(results)
+            return Response({'average_score': average_score}, status=status.HTTP_200_OK)
+        raise ValidationError({"detail": "User ID is required in query parameters."})
 
 
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
