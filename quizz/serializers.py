@@ -8,7 +8,7 @@ from quizz import models
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Answer
-        fields = ['text', 'is_correct']
+        fields = ['id', 'text', 'is_correct']
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -70,3 +70,9 @@ class QuizSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class ResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Result
+        fields = "__all__"

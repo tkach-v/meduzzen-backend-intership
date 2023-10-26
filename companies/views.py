@@ -6,7 +6,8 @@ from rest_framework.response import Response
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
-from quizz.models import Quiz
+from helpers.count_user_score import count_user_score
+from quizz.models import Quiz, Result
 from quizz.serializers import QuizSerializer
 from users.models import RequestStatuses, UserRequest
 
@@ -124,6 +125,26 @@ class CompanyViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         return Response({"detail": "You are not a member of this company."}, status=403)
+
+    @action(detail=True, methods=['GET'], url_path='user-score')
+    def user_score(self, request, pk=None):
+        """ Show average score of user per company """
+        company = self.get_object()
+        user_id = request.query_params.get('user')
+
+        if user_id is not None:
+            try:
+                user_id = int(user_id)
+            except ValueError:
+                return ValidationError({"detail": "Invalid user ID format."})
+
+            if user_id not in company.members.values_list('id', flat=True):
+                raise ValidationError({"detail": "User is not a member of this company."})
+
+            results = Result.objects.filter(quiz__company=company, user_id=user_id)
+            average_score = count_user_score(results)
+            return Response({'average_score': average_score}, status=status.HTTP_200_OK)
+        raise ValidationError({"detail": "User ID is required in query parameters."})
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,

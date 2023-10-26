@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from common.models import TimeStampedModel
@@ -38,3 +39,14 @@ class Answer(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class Result(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, models.SET_NULL, blank=True, null=True)
+    correct_questions = models.PositiveIntegerField()
+    total_questions = models.PositiveIntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} passed quiz '{self.quiz}' with score '{self.score}'"
