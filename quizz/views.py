@@ -140,6 +140,26 @@ class QuizViewSet(viewsets.ModelViewSet):
             return Response({'average_score': average_score}, status=status.HTTP_200_OK)
         raise ValidationError({"detail": "User ID is required in query parameters."})
 
+    @action(detail=True, methods=['GET'], url_path='last-taken-time')
+    def last_taken_time(self, request, pk=None):
+        quiz = self.get_object()
+        user_id = request.query_params.get('user')
+
+        if user_id is not None:
+            try:
+                user_id = int(user_id)
+            except ValueError:
+                return ValidationError({"detail": "Invalid user ID format."})
+
+            try:
+                result = models.Result.objects.filter(quiz=quiz, user_id=user_id).latest('timestamp')
+                last_taken_time = result.timestamp
+            except models.Result.DoesNotExist:
+                last_taken_time = None
+
+            return Response({'last_taken_time': last_taken_time}, status=status.HTTP_200_OK)
+        raise ValidationError({"detail": "User ID is required in query parameters."})
+
 
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.ResultSerializer
