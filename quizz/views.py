@@ -1,10 +1,10 @@
-from django.core.cache import cache
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from helpers.count_user_score import count_user_score
+from helpers.redis import set_quiz_result
 from quizz import models, serializers
 from quizz.permissions import IsOwnerOrAdministrator
 
@@ -134,10 +134,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         serializer = serializers.ResultSerializer(data=result_data)
         if serializer.is_valid():
             instance = serializer.save()
-
-            # generate the unique Redis key and save redis_data
-            cache_key = f'results:{quiz.id}:{user.id}:{instance.timestamp}'
-            cache.set(cache_key, redis_data, 60 * 60 * 48)
+            set_quiz_result(quiz.id, user.id, instance.timestamp, redis_data)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
