@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from helpers.count_user_score import count_user_score
+from helpers.redis import set_quiz_result
 from quizz import models, serializers
 from quizz.permissions import IsOwnerOrAdministrator
 
@@ -91,7 +92,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             raise ValidationError({"detail": "Invalid format for user_answers"})
 
         score = 0
-
+        redis_data = {"questions": []}
         for user_answer in user_answers:
             question = user_answer.get("question")
             answers = user_answer.get("answers")
@@ -104,10 +105,19 @@ class QuizViewSet(viewsets.ModelViewSet):
             except models.Question.DoesNotExist:
                 raise ValidationError({"detail": f"Question with id #{question} not found"})
 
+            question_data = {
+                'question': question.id,
+                'user_answers': answers,
+                'is_correct': False
+            }
+
             correct_answers = question.answers.filter(is_correct=True).values_list('id', flat=True)
             # Check if user's answer matches all correct answer IDs
             if set(answers) == set(correct_answers):
                 score += 1
+                question_data['is_correct'] = True
+
+            redis_data['questions'].append(question_data)
 
         user = request.user
         total_questions = len(quiz.get_questions())
@@ -117,10 +127,15 @@ class QuizViewSet(viewsets.ModelViewSet):
             "correct_questions": score,
             "total_questions": total_questions,
         }
+        redis_data['quiz'] = quiz.id
+        redis_data['company'] = quiz.company.id
+        redis_data['user'] = user.id
 
         serializer = serializers.ResultSerializer(data=result_data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            set_quiz_result(quiz.id, user.id, instance.timestamp, redis_data)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
