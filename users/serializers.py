@@ -50,6 +50,8 @@ class InvitationSerializer(CompanyInvitationSerializer):
 
 
 class RequestsSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+
     class Meta:
         model = UserRequest
         fields = '__all__'
@@ -78,12 +80,11 @@ class RequestsSerializer(serializers.ModelSerializer):
 
         return super().create(validated_data)
 
+    def get_status(self, obj):
+        return RequestStatuses(obj.status).name.capitalize()
+
 
 class UserCompaniesSerializer(CompanySerializer):
     class Meta(CompanySerializer.Meta):
         fields = ['id', 'name']
         read_only_fields = ('name',)
-
-
-# class UserDeleteSerializer(serializers.Serializer):
-
