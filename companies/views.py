@@ -1,3 +1,4 @@
+
 from django.contrib.auth import get_user_model
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -7,6 +8,7 @@ from rest_framework.response import Response
 from companies import models, serializers
 from companies import permissions as custom_permissions
 from helpers.count_user_score import count_user_score
+from helpers.export_results import export_results
 from quizz.models import Quiz, Result
 from quizz.serializers import QuizSerializer
 from users.models import RequestStatuses, UserRequest
@@ -37,6 +39,8 @@ class CompanyViewSet(viewsets.ModelViewSet):
         ]:
             # Allow editing only for the owner of the company
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwner()]
+        if self.action == 'export_results':
+            return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwnerOrAdmin()]
 
         # Allow reading and creating for any authenticated user
         return [permissions.IsAuthenticated()]
@@ -145,6 +149,28 @@ class CompanyViewSet(viewsets.ModelViewSet):
             average_score = count_user_score(results)
             return Response({'average_score': average_score}, status=status.HTTP_200_OK)
         raise ValidationError({"detail": "User ID is required in query parameters."})
+
+    @action(detail=True, methods=['GET'], url_path='export-results/(?P<file_type>csv|json)')
+    def export_results(self, request, file_type, pk=None):
+        """ An action to export the results of quizzes within the company """
+        company = self.get_object()
+        user_id = request.query_params.get('user')
+
+        if user_id is not None:
+            try:
+                user_id = int(user_id)
+            except ValueError:
+                return ValidationError({"detail": "Invalid user ID format."})
+
+            if user_id not in company.members.values_list('id', flat=True):
+                raise ValidationError({"detail": "User is not a member of this company."})
+
+            results = Result.objects.filter(quiz__company=company, user_id=user_id)
+
+        else:
+            results = Result.objects.filter(quiz__company=company)
+
+        return export_results(results, file_type)
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,

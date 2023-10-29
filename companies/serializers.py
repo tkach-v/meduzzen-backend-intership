@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from companies import models
-from users.models import UserRequest, RequestStatuses
+from users.models import RequestStatuses, UserRequest
 
 
 class CompanySerializer(serializers.ModelSerializer):
