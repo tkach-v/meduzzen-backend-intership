@@ -76,3 +76,31 @@ class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Result
         fields = "__all__"
+
+
+class ExportResultsSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    company = serializers.SerializerMethodField()
+    quiz = serializers.SerializerMethodField()
+    score = serializers.SerializerMethodField()
+    date_passed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Result
+        fields = ['id', 'user', 'company', 'quiz', 'score', 'date_passed']
+
+    # Define methods to get custom field values
+    def get_user(self, obj):
+        return obj.user.email
+
+    def get_company(self, obj):
+        return obj.quiz.company.name
+
+    def get_quiz(self, obj):
+        return obj.quiz.title
+
+    def get_score(self, obj):
+        return obj.correct_questions / obj.total_questions if obj.total_questions > 0 else 0
+
+    def get_date_passed(self, obj):
+        return obj.timestamp.strftime('%Y-%m-%d %H:%M:%S')  # Adjust the format as needed

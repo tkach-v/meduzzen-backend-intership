@@ -31,3 +31,8 @@ class IsRequestOwnerOrCompanyOwner(permissions.BasePermission):
         is_company_owner = IsCompanyOwnerNested().has_permission(request, view)
         is_request_owner = IsRequestOwner().has_permission(request, view)
         return is_company_owner or is_request_owner
+
+
+class IsCompanyOwnerOrAdmin(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.owner == request.user or request.user in obj.administrators.all()

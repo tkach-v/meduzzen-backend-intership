@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from helpers.count_user_score import count_user_score
+from helpers.export_results import export_results
 from helpers.redis import set_quiz_result
 from quizz import models, serializers
 from quizz.permissions import IsOwnerOrAdministrator
@@ -35,6 +36,8 @@ class QuizViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'add_question':
             return serializers.QuestionSerializer
+        if self.action == 'export_results':
+            return serializers.ExportResultsSerializer
         return serializers.QuizSerializer
 
     @action(detail=True,
@@ -174,6 +177,14 @@ class QuizViewSet(viewsets.ModelViewSet):
 
             return Response({'last_taken_time': last_taken_time}, status=status.HTTP_200_OK)
         raise ValidationError({"detail": "User ID is required in query parameters."})
+
+    @action(detail=True, methods=['GET'], url_path='export-results/(?P<file_type>csv|json)')
+    def export_results(self, request, file_type, pk=None):
+        """ An action to export the results of quizzes that the user has passed """
+        quiz = self.get_object()
+        user = self.request.user
+
+        return export_results(models.Result.objects.filter(quiz=quiz, user=user), file_type)
 
 
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
