@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -39,7 +38,11 @@ class CompanyViewSet(viewsets.ModelViewSet):
         ]:
             # Allow editing only for the owner of the company
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwner()]
-        if self.action == 'export_results':
+        if self.action in [
+            'export_results',
+            'list_users_last_test_time',
+            'list_quizzes_last_test_time',
+        ]:
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwnerOrAdmin()]
 
         # Allow reading and creating for any authenticated user
@@ -171,6 +174,42 @@ class CompanyViewSet(viewsets.ModelViewSet):
             results = Result.objects.filter(quiz__company=company)
 
         return export_results(results, file_type)
+
+    @action(detail=True, methods=['GET'], url_path='users-last-test-time')
+    def list_users_last_test_time(self, request, pk=None):
+        """ List of users of the company and their time of last test. """
+        company = self.get_object()
+
+        members = company.members.all()
+        results = []
+
+        for member in members:
+            last_test = Result.objects.filter(quiz__company=company, user=member).order_by('-timestamp').first()
+            results.append({
+                'id': member.id,
+                'email': member.email,
+                'last_test_timestamp': last_test.timestamp if last_test else None
+            })
+
+        return Response(results)
+
+    @action(detail=True, methods=['GET'], url_path='quizzes-last-test-time')
+    def list_quizzes_last_test_time(self, request, pk=None):
+        """ List of quizzes and the time if it’s last completions. """
+        company = self.get_object()
+
+        quizzes = company.quiz_set.all()
+        results = []
+
+        for quiz in quizzes:
+            last_test = Result.objects.filter(quiz=quiz).order_by('-timestamp').first()
+            results.append({
+                'id': quiz.id,
+                'title': quiz.title,
+                'last_test_timestamp': last_test.timestamp if last_test else None
+            })
+
+        return Response(results)
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,

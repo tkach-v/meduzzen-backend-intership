@@ -1,5 +1,5 @@
 import csv
-from enum import Enum
+from enum import StrEnum, auto
 
 from django.http import HttpResponse
 from rest_framework.response import Response
@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from quizz.serializers import ExportResultsSerializer
 
 
-class FileType(Enum):
-    CSV = 'csv'
-    JSON = 'json'
+class FileType(StrEnum):
+    CSV = auto()
+    JSON = auto()
 
 
 def export_results(results, file_type):

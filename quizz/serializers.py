@@ -103,4 +103,4 @@ class ExportResultsSerializer(serializers.ModelSerializer):
         return obj.correct_questions / obj.total_questions if obj.total_questions > 0 else 0
 
     def get_date_passed(self, obj):
-        return obj.timestamp.strftime('%Y-%m-%d %H:%M:%S')  # Adjust the format as needed
+        return obj.timestamp.strftime('%Y-%m-%d %H:%M:%S')
