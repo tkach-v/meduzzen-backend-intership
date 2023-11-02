@@ -191,7 +191,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
         results = [
             {
-                'id': member.id,
+                'user_id': member.id,
                 'email': member.email,
                 'last_test_timestamp': last_test_dict[member.id]
             }
@@ -213,7 +213,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         for quiz in quizzes:
             last_test = quiz.result_set.aggregate(last_test_timestamp=Max('timestamp'))['last_test_timestamp']
             results.append({
-                'id': quiz.id,
+                'quiz_id': quiz.id,
                 'title': quiz.title,
                 'last_test_timestamp': last_test
             })

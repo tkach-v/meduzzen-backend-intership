@@ -112,6 +112,6 @@ class ScoreTimestampSerializer(serializers.Serializer):
 
 
 class QuizScoresSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    quiz_id = serializers.IntegerField()
     title = serializers.CharField()
     results = ScoreTimestampSerializer(many=True)

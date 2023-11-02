@@ -36,12 +36,12 @@ class CompanyRequestSerializer(serializers.ModelSerializer):
 
 
 class UsersLastTestTimeSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    user_id = serializers.IntegerField()
     email = serializers.EmailField()
     last_test_timestamp = serializers.DateTimeField()
 
 
 class QuizzesLastTestTimeSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    quiz_id = serializers.IntegerField()
     title = serializers.CharField()
     last_test_timestamp = serializers.DateTimeField()

@@ -4,7 +4,6 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from companies.models import Company
 from helpers.count_score_with_dynamics import count_score_with_dynamics
 from helpers.count_user_score import count_user_score
 from helpers.export_results import export_results
@@ -210,7 +209,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             for quiz in quizzes:
                 quiz_results = count_score_with_dynamics(models.Result.objects.filter(user=user, quiz=quiz))
                 data.append({
-                    'id': quiz.id,
+                    'quiz_id': quiz.id,
                     'title': quiz.title,
                     'results': quiz_results,
                 })
@@ -234,7 +233,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         for quiz in quizzes:
             quiz_results = count_score_with_dynamics(models.Result.objects.filter(quiz=quiz))
             data.append({
-                'id': quiz.id,
+                'quiz_id': quiz.id,
                 'title': quiz.title,
                 'results': quiz_results,
             })
