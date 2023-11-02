@@ -41,7 +41,7 @@ class QuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Quiz
-        fields = ['id', 'title', 'description', 'frequency', 'company', 'questions']
+        fields = ['id', 'title', 'description', 'frequency', 'company', 'created_at', 'updated_at', 'questions']
 
     def validate_questions(self, value):
         if len(value) < 2:
@@ -104,3 +104,14 @@ class ExportResultsSerializer(serializers.ModelSerializer):
 
     def get_date_passed(self, obj):
         return obj.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+
+class ScoreTimestampSerializer(serializers.Serializer):
+    score = serializers.FloatField()
+    timestamp = serializers.DateTimeField()
+
+
+class QuizScoresSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    results = ScoreTimestampSerializer(many=True)

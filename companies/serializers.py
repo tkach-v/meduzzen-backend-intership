@@ -33,3 +33,15 @@ class CompanyRequestSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         return RequestStatuses(obj.status).name.capitalize()
+
+
+class UsersLastTestTimeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    email = serializers.EmailField()
+    last_test_timestamp = serializers.DateTimeField()
+
+
+class QuizzesLastTestTimeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    last_test_timestamp = serializers.DateTimeField()

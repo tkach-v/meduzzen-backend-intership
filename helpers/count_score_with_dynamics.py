@@ -1,4 +1,14 @@
-def count_score_with_dynamics(results):
+from typing import List, Optional, TypedDict
+
+from quizz.models import Result
+
+
+class Coordinates(TypedDict):
+    score: float
+    timestamp: str
+
+
+def count_score_with_dynamics(results: List[Result]) -> Optional[List[Coordinates]]:
     """ List of average scores of all users with dynamics over time. """
 
     if results.exists():

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Max
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -181,35 +182,44 @@ class CompanyViewSet(viewsets.ModelViewSet):
         company = self.get_object()
 
         members = company.members.all()
-        results = []
+        user_ids = members.values_list('id', flat=True)
+        last_tests = Result.objects.filter(quiz__company=company, user_id__in=user_ids).order_by('user', '-timestamp')
+        last_test_dict = {user_id: None for user_id in user_ids}
 
-        for member in members:
-            last_test = Result.objects.filter(quiz__company=company, user=member).order_by('-timestamp').first()
-            results.append({
+        for result in last_tests:
+            last_test_dict[result.user_id] = result.timestamp
+
+        results = [
+            {
                 'id': member.id,
                 'email': member.email,
-                'last_test_timestamp': last_test.timestamp if last_test else None
-            })
+                'last_test_timestamp': last_test_dict[member.id]
+            }
+            for member in members
+        ]
 
-        return Response(results)
+        serializer = serializers.UsersLastTestTimeSerializer(results, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['GET'], url_path='quizzes-last-test-time')
     def list_quizzes_last_test_time(self, request, pk=None):
         """ List of quizzes and the time if it’s last completions. """
         company = self.get_object()
 
-        quizzes = company.quiz_set.all()
+        quizzes = company.quiz_set.all().prefetch_related('result_set')
+
         results = []
 
         for quiz in quizzes:
-            last_test = Result.objects.filter(quiz=quiz).order_by('-timestamp').first()
+            last_test = quiz.result_set.aggregate(last_test_timestamp=Max('timestamp'))['last_test_timestamp']
             results.append({
                 'id': quiz.id,
                 'title': quiz.title,
-                'last_test_timestamp': last_test.timestamp if last_test else None
+                'last_test_timestamp': last_test
             })
 
-        return Response(results)
+        serializer = serializers.QuizzesLastTestTimeSerializer(results, many=True)
+        return Response(serializer.data)
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,

@@ -205,8 +205,7 @@ class QuizViewSet(viewsets.ModelViewSet):
             except get_user_model().DoesNotExist:
                 raise ValidationError({'detail': 'User not found'})
 
-            companies = Company.objects.filter(members=user)
-            quizzes = models.Quiz.objects.filter(company__in=companies)
+            quizzes = models.Quiz.objects.filter(company__members=user).prefetch_related('company')
             data = []
             for quiz in quizzes:
                 quiz_results = count_score_with_dynamics(models.Result.objects.filter(user=user, quiz=quiz))
@@ -215,21 +214,23 @@ class QuizViewSet(viewsets.ModelViewSet):
                     'title': quiz.title,
                     'results': quiz_results,
                 })
-            return Response(data, status=status.HTTP_200_OK)
+            serializer = serializers.QuizScoresSerializer(data, many=True)
+            return Response(serializer.data)
         raise ValidationError({"detail": "User ID is required in query parameters."})
 
     @action(detail=False, methods=['GET'], url_path='all-users-scores')
     def all_users_scores(self, request):
         """ List of average scores of all users with dynamics over time """
         results = models.Result.objects.all()
-        data = count_score_with_dynamics(results)
-        return Response(data, status=status.HTTP_200_OK)
+        serializer = serializers.ScoreTimestampSerializer(count_score_with_dynamics(results), many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['GET'], url_path='quizzes-scores')
     def quizzes_scores(self, request):
         """ List of average scores for each of the quiz from all companies with dynamics over time """
         quizzes = models.Quiz.objects.all()
         data = []
+
         for quiz in quizzes:
             quiz_results = count_score_with_dynamics(models.Result.objects.filter(quiz=quiz))
             data.append({
@@ -237,7 +238,8 @@ class QuizViewSet(viewsets.ModelViewSet):
                 'title': quiz.title,
                 'results': quiz_results,
             })
-        return Response(data, status=status.HTTP_200_OK)
+        serializer = serializers.QuizScoresSerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
