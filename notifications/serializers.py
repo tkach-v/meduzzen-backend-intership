@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from notifications.models import Notification, NotificationStatuses
+from notifications.models import Notification
 
 
 class NotificationSerializer(serializers.ModelSerializer):

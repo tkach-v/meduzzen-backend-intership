@@ -1,6 +1,7 @@
-from django.db import models
 from enum import StrEnum, auto
+
 from django.conf import settings
+from django.db import models
 
 from common.models import TimeStampedModel
 
