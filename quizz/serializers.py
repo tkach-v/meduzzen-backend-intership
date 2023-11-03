@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from quizz import models
+from notifications.models import Notification, NotificationStatuses
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -49,18 +50,28 @@ class QuizSerializer(serializers.ModelSerializer):
 
         return value
 
+    @transaction.atomic
     def create(self, validated_data):
         questions_data = validated_data.pop('questions', [])
 
-        with transaction.atomic():
-            quiz = models.Quiz.objects.create(**validated_data)
-            questions = QuestionSerializer(data=questions_data, many=True)
-            if questions.is_valid():
-                questions.save(quiz=quiz)
-            else:
-                raise ValidationError(questions.errors)
+        quiz = models.Quiz.objects.create(**validated_data)
+        questions = QuestionSerializer(data=questions_data, many=True)
+        if questions.is_valid():
+            questions.save(quiz=quiz)
+        else:
+            raise ValidationError(questions.errors)
 
-            return quiz
+        # send notification to company members
+        notifications = []
+        for user in quiz.company.members.all():
+            notifications.append(Notification(
+                user=user,
+                text=f"You have a new quiz available: {quiz.title}",
+                status=NotificationStatuses.PENDING
+            ))
+        Notification.objects.bulk_create(notifications)
+
+        return quiz
 
     @transaction.atomic
     def update(self, instance, validated_data):
