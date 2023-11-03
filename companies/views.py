@@ -1,5 +1,5 @@
-
 from django.contrib.auth import get_user_model
+from django.db.models import Max
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -39,7 +39,11 @@ class CompanyViewSet(viewsets.ModelViewSet):
         ]:
             # Allow editing only for the owner of the company
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwner()]
-        if self.action == 'export_results':
+        if self.action in [
+            'export_results',
+            'list_users_last_test_time',
+            'list_quizzes_last_test_time',
+        ]:
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwnerOrAdmin()]
 
         # Allow reading and creating for any authenticated user
@@ -171,6 +175,51 @@ class CompanyViewSet(viewsets.ModelViewSet):
             results = Result.objects.filter(quiz__company=company)
 
         return export_results(results, file_type)
+
+    @action(detail=True, methods=['GET'], url_path='users-last-test-time')
+    def list_users_last_test_time(self, request, pk=None):
+        """ List of users of the company and their time of last test. """
+        company = self.get_object()
+
+        members = company.members.all()
+        user_ids = members.values_list('id', flat=True)
+        last_tests = Result.objects.filter(quiz__company=company, user_id__in=user_ids).order_by('user', '-timestamp')
+        last_test_dict = {user_id: None for user_id in user_ids}
+
+        for result in last_tests:
+            last_test_dict[result.user_id] = result.timestamp
+
+        results = [
+            {
+                'user_id': member.id,
+                'email': member.email,
+                'last_test_timestamp': last_test_dict[member.id]
+            }
+            for member in members
+        ]
+
+        serializer = serializers.UsersLastTestTimeSerializer(results, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'], url_path='quizzes-last-test-time')
+    def list_quizzes_last_test_time(self, request, pk=None):
+        """ List of quizzes and the time if it’s last completions. """
+        company = self.get_object()
+
+        quizzes = company.quiz_set.all().prefetch_related('result_set')
+
+        results = []
+
+        for quiz in quizzes:
+            last_test = quiz.result_set.aggregate(last_test_timestamp=Max('timestamp'))['last_test_timestamp']
+            results.append({
+                'quiz_id': quiz.id,
+                'title': quiz.title,
+                'last_test_timestamp': last_test
+            })
+
+        serializer = serializers.QuizzesLastTestTimeSerializer(results, many=True)
+        return Response(serializer.data)
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,

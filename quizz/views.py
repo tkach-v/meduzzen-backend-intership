@@ -1,8 +1,10 @@
+from django.contrib.auth import get_user_model
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from helpers.count_score_with_dynamics import count_score_with_dynamics
 from helpers.count_user_score import count_user_score
 from helpers.export_results import export_results
 from helpers.redis import set_quiz_result
@@ -185,6 +187,58 @@ class QuizViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         return export_results(models.Result.objects.filter(quiz=quiz, user=user), file_type)
+
+    @action(detail=False, methods=['GET'], url_path='user-quizzes-scores')
+    def user_quizzes_scores(self, request):
+        """ List of average scores for all quizzes of the selected user with dynamics over time """
+        user_id = request.query_params.get('user')
+
+        if user_id is not None:
+            try:
+                user_id = int(user_id)
+            except ValueError:
+                return ValidationError({"detail": "Invalid user ID format."})
+
+            try:
+                user = get_user_model().objects.get(pk=user_id)
+            except get_user_model().DoesNotExist:
+                raise ValidationError({'detail': 'User not found'})
+
+            quizzes = models.Quiz.objects.filter(company__members=user).prefetch_related('company')
+            data = []
+            for quiz in quizzes:
+                quiz_results = count_score_with_dynamics(models.Result.objects.filter(user=user, quiz=quiz))
+                data.append({
+                    'quiz_id': quiz.id,
+                    'title': quiz.title,
+                    'results': quiz_results,
+                })
+            serializer = serializers.QuizScoresSerializer(data, many=True)
+            return Response(serializer.data)
+        raise ValidationError({"detail": "User ID is required in query parameters."})
+
+    @action(detail=False, methods=['GET'], url_path='all-users-scores')
+    def all_users_scores(self, request):
+        """ List of average scores of all users with dynamics over time """
+        results = models.Result.objects.all()
+        serializer = serializers.ScoreTimestampSerializer(count_score_with_dynamics(results), many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['GET'], url_path='quizzes-scores')
+    def quizzes_scores(self, request):
+        """ List of average scores for each of the quiz from all companies with dynamics over time """
+        quizzes = models.Quiz.objects.all()
+        data = []
+
+        for quiz in quizzes:
+            quiz_results = count_score_with_dynamics(models.Result.objects.filter(quiz=quiz))
+            data.append({
+                'quiz_id': quiz.id,
+                'title': quiz.title,
+                'results': quiz_results,
+            })
+        serializer = serializers.QuizScoresSerializer(data, many=True)
+        return Response(serializer.data)
 
 
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
