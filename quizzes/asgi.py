@@ -14,8 +14,8 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
-from notifications.routing import websocket_urlpatterns
 from notifications.jwtmiddleware import jwt_auth_middleware_stack
+from notifications.routing import websocket_urlpatterns
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'quizzes.settings')
 django.setup()

@@ -1,5 +1,5 @@
-from enum import StrEnum, auto
 import json
+from enum import StrEnum, auto
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer

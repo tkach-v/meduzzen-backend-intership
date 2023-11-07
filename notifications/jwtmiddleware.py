@@ -15,8 +15,7 @@ from rest_framework_simplejwt.tokens import UntypedToken
 @database_sync_to_async
 def get_user(validated_token):
     try:
-        user = get_user_model().objects.get(id=validated_token["user_id"])
-        return user
+        return get_user_model().objects.get(id=validated_token["user_id"])
 
     except get_user_model().DoesNotExist:
         return AnonymousUser()
