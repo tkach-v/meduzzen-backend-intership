@@ -24,4 +24,5 @@ exclude = [
     "__pycache__",
     "settings.py",
     "apps.py",
+    "send_notification.py",
 ]
