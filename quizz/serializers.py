@@ -2,6 +2,8 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from notifications.models import Notification, NotificationStatuses
+from notifications.send_notification import send_notification
 from quizz import models
 
 
@@ -49,18 +51,31 @@ class QuizSerializer(serializers.ModelSerializer):
 
         return value
 
+    @transaction.atomic
     def create(self, validated_data):
         questions_data = validated_data.pop('questions', [])
 
-        with transaction.atomic():
-            quiz = models.Quiz.objects.create(**validated_data)
-            questions = QuestionSerializer(data=questions_data, many=True)
-            if questions.is_valid():
-                questions.save(quiz=quiz)
-            else:
-                raise ValidationError(questions.errors)
+        quiz = models.Quiz.objects.create(**validated_data)
+        questions = QuestionSerializer(data=questions_data, many=True)
+        if questions.is_valid():
+            questions.save(quiz=quiz)
+        else:
+            raise ValidationError(questions.errors)
 
-            return quiz
+        # create and send notification to company members
+        notifications = []
+        for user in quiz.company.members.all():
+            notifications.append(Notification(
+                user=user,
+                text=f"You have a new quiz available: {quiz.title}",
+                status=NotificationStatuses.PENDING
+            ))
+        Notification.objects.bulk_create(notifications)
+
+        for notification in notifications:
+            send_notification(notification)
+
+        return quiz
 
     @transaction.atomic
     def update(self, instance, validated_data):

@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/companies/', include('companies.urls')),
     path('api/users/', include('users.urls')),
     path('api/quizzes/', include('quizz.urls')),
+    path('api/notifications/', include('notifications.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
