@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import parse_qs
 
 from channels.auth import AuthMiddlewareStack
@@ -32,7 +33,8 @@ class JwtAuthMiddleware(BaseMiddleware):
         try:
             UntypedToken(token)
         except (InvalidToken, TokenError) as e:
-            print(e)
+            logger = logging.getLogger(__name__)
+            logger.error(e)
             return None
         else:
             decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])

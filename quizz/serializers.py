@@ -2,8 +2,8 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from helpers.send_notification import send_notification
 from notifications.models import Notification, NotificationStatuses
+from notifications.send_notification import send_notification
 from quizz import models
 
 
@@ -72,8 +72,8 @@ class QuizSerializer(serializers.ModelSerializer):
             ))
         Notification.objects.bulk_create(notifications)
 
-        for i in notifications:
-            send_notification(i)
+        for notification in notifications:
+            send_notification(notification)
 
         return quiz
 

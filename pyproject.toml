@@ -23,4 +23,5 @@ exclude = [
     "venv",
     "__pycache__",
     "settings.py",
+    "apps.py",
 ]
