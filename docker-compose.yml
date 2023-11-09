@@ -15,6 +15,7 @@ services:
       - .env
     depends_on:
       - db
+      - redis
 
   db:
     image: postgres:alpine
@@ -33,6 +34,45 @@ services:
     image: redis:alpine
     ports:
       - "6380:6379"
+
+  celery-worker:
+    image: app-image:latest
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: celery --app=quizzes worker --loglevel=warning --logfile=celery_worker.log
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  celery-beat:
+    image: app-image:latest
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: celery --app=quizzes beat --loglevel=warning --logfile=celery_beat.log
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  flower:
+    image: app-image:latest
+    build:
+      context: .
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/app
+    command: celery --app=quizzes flower
+    env_file:
+      - .env
+    depends_on:
+      - redis
 
 volumes:
   db-data:

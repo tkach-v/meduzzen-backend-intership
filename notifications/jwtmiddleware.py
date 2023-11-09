@@ -12,6 +12,8 @@ from jwt import decode as jwt_decode
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import UntypedToken
 
+logger = logging.getLogger(__name__)
+
 
 @database_sync_to_async
 def get_user(validated_token):
@@ -24,6 +26,7 @@ def get_user(validated_token):
 
 class JwtAuthMiddleware(BaseMiddleware):
     """ JWT Token authorization for channels"""
+
     def __init__(self, inner):
         self.inner = inner
 
@@ -33,7 +36,6 @@ class JwtAuthMiddleware(BaseMiddleware):
         try:
             UntypedToken(token)
         except (InvalidToken, TokenError) as e:
-            logger = logging.getLogger(__name__)
             logger.error(e)
             return None
         else:

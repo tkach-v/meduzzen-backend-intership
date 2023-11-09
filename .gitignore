@@ -5,3 +5,4 @@ __pycache__/
 *.log
 /media/avatars/*
 !/media/avatars/default.jpg
+celerybeat-schedule

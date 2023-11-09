@@ -49,4 +49,4 @@ class Result(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user} passed quiz '{self.quiz}' with score '{self.score}'"
+        return f"{self.user} passed quiz '{self.quiz}'"
