@@ -266,6 +266,6 @@ CELERY_RESULT_BACKEND = f'redis://{os.environ.get("REDIS_HOST")}:{os.environ.get
 CELERY_BEAT_SCHEDULE = {
     "notify_users": {
         "task": "quizz.tasks.notify_users",
-        "schedule": crontab(),
+        "schedule": crontab(minute=0, hour=0),
     },
 }
