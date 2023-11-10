@@ -1,3 +1,5 @@
+import openpyxl
+
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 from rest_framework import mixins, permissions, status, viewsets
@@ -43,6 +45,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
             'export_results',
             'list_users_last_test_time',
             'list_quizzes_last_test_time',
+            'import_quiz',
         ]:
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwnerOrAdmin()]
 
@@ -220,6 +223,101 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
         serializer = serializers.QuizzesLastTestTimeSerializer(results, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='import-quiz')
+    def import_quiz(self, request, pk=None):
+        excel_file = request.data.get('excel_file')
+
+        if not excel_file:
+            raise ValidationError({'detail': 'excel_file is required.'})
+
+        try:
+            wb = openpyxl.load_workbook(excel_file, data_only=False)
+        except Exception as e:
+            raise ValidationError({'detail': f'Error processing Excel file: {str(e)}'})
+
+        worksheet = wb.worksheets[0]
+        header_row = next(worksheet.iter_rows())
+
+        columns = {
+            "quiz": None,
+            "description": None,
+            "frequency": None,
+            "question": None,
+            "answer": None,
+            "is_correct": None,
+        }
+
+        # Find the column index for each field
+        for col_index, cell in enumerate(header_row):
+            for key in columns.keys():
+                if cell.value == key:
+                    columns[key] = col_index
+
+        missing_columns = [key for key, value in columns.items() if value is None]
+        if missing_columns:
+            raise ValidationError({'detail': f'Missing columns: {missing_columns}'})
+
+        quiz_data = {
+            "title": None,
+            "description": None,
+            "frequency": None,
+            "company": self.get_object().id,
+            "questions": [],
+        }
+
+        current_question_data = None
+        for row in worksheet.iter_rows(min_row=2):
+            if quiz_data['title'] is None:
+                quiz_data['title'] = row[columns['quiz']].value
+                quiz_data['description'] = row[columns['description']].value
+                quiz_data['frequency'] = row[columns['frequency']].value
+
+            question_text = row[columns['question']].value
+
+            if question_text:
+                # Check if the question text is the same as the current question
+                if current_question_data and current_question_data["text"] == question_text:
+                    # If the question text is the same, add a new answer to the current question
+                    answer_text = row[columns['answer']].value
+                    is_correct = row[columns['is_correct']].value
+
+                    if answer_text:
+                        answer_data = {
+                            "text": answer_text,
+                            "is_correct": bool(is_correct),
+                        }
+                        current_question_data["answers"].append(answer_data)
+                else:
+                    # If the question text is different, start a new question
+                    current_question_data = {
+                        "text": question_text,
+                        "answers": [],
+                    }
+
+                    # Process answers for the new question
+                    answer_text = row[columns['answer']].value
+                    is_correct = row[columns['is_correct']].value
+
+                    if answer_text:
+                        answer_data = {
+                            "text": answer_text,
+                            "is_correct": bool(is_correct),
+                        }
+                        current_question_data["answers"].append(answer_data)
+
+                    quiz_data['questions'].append(current_question_data)
+
+        wb.close()
+
+        print(quiz_data)
+
+        serializer = QuizSerializer(data=quiz_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            raise ValidationError({'detail': serializer.errors})
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,
