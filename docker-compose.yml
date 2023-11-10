@@ -54,7 +54,7 @@ services:
       context: .
     volumes:
       - .:/app
-    command: celery --app=quizzes beat --loglevel=warning --logfile=celery_beat.log
+    command: celery --app=quizzes beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --loglevel=warning --logfile=celery_beat.log
     env_file:
       - .env
     depends_on:

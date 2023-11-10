@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum, auto
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from notifications.models import Notification
 
 
-class NotificationType(str, Enum):
-    NOTIFY = 'notify'
+class NotificationType(StrEnum):
+    NOTIFY = auto()
 
 
 class NotificationData(BaseModel):
