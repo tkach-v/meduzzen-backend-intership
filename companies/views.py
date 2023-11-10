@@ -1,3 +1,4 @@
+import openpyxl
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 from rest_framework import mixins, permissions, status, viewsets
@@ -7,6 +8,7 @@ from rest_framework.response import Response
 
 from companies import models, serializers
 from companies import permissions as custom_permissions
+from companies.process_quiz_excel_worksheet import process_quiz_excel_worksheet
 from helpers.count_user_score import count_user_score
 from helpers.export_results import export_results
 from quizz.models import Quiz, Result
@@ -43,6 +45,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
             'export_results',
             'list_users_last_test_time',
             'list_quizzes_last_test_time',
+            'import_quiz',
         ]:
             return [permissions.IsAuthenticated(), custom_permissions.IsCompanyOwnerOrAdmin()]
 
@@ -220,6 +223,29 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
         serializer = serializers.QuizzesLastTestTimeSerializer(results, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='import-quiz')
+    def import_quiz(self, request, pk=None):
+        excel_file = request.data.get('excel_file')
+
+        if not excel_file:
+            raise ValidationError({'detail': 'excel_file is required.'})
+
+        try:
+            wb = openpyxl.load_workbook(excel_file, data_only=False)
+        except Exception as e:
+            raise ValidationError({'detail': f'Error processing Excel file: {str(e)}'})
+
+        worksheet = wb.worksheets[0]
+        quiz_data = process_quiz_excel_worksheet(worksheet)
+        quiz_data['company'] = self.get_object().id
+        wb.close()
+
+        serializer = QuizSerializer(data=quiz_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        raise ValidationError({'detail': serializer.errors})
 
 
 class CompanyInvitationViewSet(mixins.ListModelMixin,
