@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'social_django',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django_celery_beat',
 
     'common',
     'health_check',
@@ -263,9 +264,3 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ['first_name', 'last_name']
 
 CELERY_BROKER_URL = f'redis://{os.environ.get("REDIS_HOST")}:{os.environ.get("REDIS_PORT")}/0'
 CELERY_RESULT_BACKEND = f'redis://{os.environ.get("REDIS_HOST")}:{os.environ.get("REDIS_PORT")}/0'
-CELERY_BEAT_SCHEDULE = {
-    "notify_users": {
-        "task": "quizz.tasks.notify_users",
-        "schedule": crontab(minute=0, hour=0),
-    },
-}
