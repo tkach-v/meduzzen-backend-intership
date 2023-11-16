@@ -3,6 +3,8 @@ name: Checks
 on:
   pull_request:
     types: [opened, closed]
+    branches:
+      - develop
 
 jobs:
   test-lint:
@@ -11,7 +13,6 @@ jobs:
     if: >
       github.event_name == 'pull_request'
       && github.event.action == 'opened'
-      && github.event.pull_request.base.ref == 'develop'
 
     env:
       DB_HOST: ${{ secrets.DB_HOST }}
@@ -62,7 +63,6 @@ jobs:
       github.event_name == 'pull_request'
       && github.event.action == 'closed'
       && github.event.pull_request.merged
-      && github.event.pull_request.base.ref == 'develop'
     steps:
       - name: Stop and remove old containers
         run: sudo docker compose down
