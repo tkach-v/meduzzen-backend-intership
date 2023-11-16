@@ -7,8 +7,7 @@ on:
   pull_request:
     types: [closed]
     branches:
-      - BE-21-add-deployment-action
-
+      - test-branch
 jobs:
   test-lint:
     name: Run lint and tests
