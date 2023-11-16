@@ -1,11 +1,17 @@
 name: Checks
 
-on: push
+on:
+  pull_request:
+    types: [opened, closed]
 
 jobs:
   test-lint:
     name: Run lint and tests
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'pull_request'
+      && github.event.action == 'opened'
+      && github.event.pull_request.base.ref == 'develop'
 
     env:
       DB_HOST: ${{ secrets.DB_HOST }}
@@ -48,3 +54,23 @@ jobs:
         run: docker-compose run --rm app sh -c "ruff check ."
       - name: Test
         run: docker-compose run --rm app sh -c "python manage.py test"
+
+  deployment:
+    needs: test-lint
+    runs-on: self-hosted
+    if: >
+      github.event_name == 'pull_request'
+      && github.event.action == 'closed'
+      && github.event.pull_request.merged
+      && github.event.pull_request.base.ref == 'develop'
+    steps:
+      - name: Stop and remove old containers
+        run: sudo docker compose down
+      - name: Pull develop branch from remote
+        run: git pull origin develop
+      - name: Set branch to develop
+        run: git checkout develop
+      - name: Make start.sh executable
+        run: sudo chmod +x start.sh
+      - name: Build and start new containers
+        run: sudo docker compose up --build -d

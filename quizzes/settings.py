@@ -238,8 +238,6 @@ DJOSER = {
     }
 }
 
-SESSION_COOKIE_DOMAIN = '127.0.0.1'
-
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend'
