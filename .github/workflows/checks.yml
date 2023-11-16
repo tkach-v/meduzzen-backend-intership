@@ -1,17 +1,18 @@
 name: Checks
 
 on:
+  push:
+    branches:
+      - '*'
   pull_request:
-    types: [opened, closed]
-
+    types: [closed]
+    branches:
+      - develop
 jobs:
   test-lint:
     name: Run lint and tests
     runs-on: ubuntu-latest
-    if: >
-      github.event_name == 'pull_request'
-      && github.event.action == 'opened'
-      && github.event.pull_request.base.ref == 'develop'
+    if: github.event_name == 'push'
 
     env:
       DB_HOST: ${{ secrets.DB_HOST }}
@@ -56,13 +57,11 @@ jobs:
         run: docker-compose run --rm app sh -c "python manage.py test"
 
   deployment:
-    needs: test-lint
     runs-on: self-hosted
     if: >
       github.event_name == 'pull_request'
       && github.event.action == 'closed'
       && github.event.pull_request.merged
-      && github.event.pull_request.base.ref == 'develop'
     steps:
       - name: Stop and remove old containers
         run: sudo docker compose down
