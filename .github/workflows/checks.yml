@@ -8,6 +8,7 @@ on:
     types: [closed]
     branches:
       - test-branch
+
 jobs:
   test-lint:
     name: Run lint and tests
