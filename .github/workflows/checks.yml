@@ -1,17 +1,17 @@
 name: Checks
 
 on:
-  push:
-    branches:
-      - '*'
   pull_request:
-    types: [closed]
+    types: [opened, closed]
 
 jobs:
   test-lint:
     name: Run lint and tests
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: >
+      github.event_name == 'pull_request'
+      && github.event.action == 'opened'
+      && github.event.pull_request.base.ref == 'develop'
 
     env:
       DB_HOST: ${{ secrets.DB_HOST }}
